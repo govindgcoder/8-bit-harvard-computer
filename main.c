@@ -1,4 +1,5 @@
 #include<stdbool.h>
+#include<stdio.h>
 #include<stdint.h>
 #include<string.h>
 #include<stdlib.h>
@@ -19,17 +20,20 @@ typedef struct CPU {
 
 void main()
 {
+
+  CPU mycpu;
+
   char program[256][10];
 
   int i = 0;
   while (program[i]!=NULL && i<256) {
     char *p = program[i];
-    char ir[];
+    char ir[10];
     int j = 0;
     while(*p!=' '){
-      ir[j]=*p;
-      *p+=1;j++;
+      ir[j]=*p++;j++;
     }
+    ir[j]='\0';
     uint8_t opcode = 0;
     if(strcmp(ir,"ADD")){
     } else if(strcmp(ir,"SUB")){
@@ -48,10 +52,20 @@ void main()
       opcode = opcode | 0x7;
     } else {
       printf("Bad instruction at %d\n",i+1);
+      return;
     }
     opcode = opcode << 5;
-    
+    char operand[4];
+    int k = 0;
+    while(*p!=' '||*p!='\0'){
+      operand[k]=*p+=1;k++;
+    }
+    operand[k]='\0';
+    long operandVal = strtol(operand, NULL, 16);
+    if(operandVal<0 || operandVal > 31) return;
+    opcode = opcode | ((uint8_t) operandVal);
 
+    mycpu.ROM[i]=opcode;
     i++;
   }
 
