@@ -18,47 +18,46 @@ typedef struct CPU {
   uint8_t stk; // stack pointer
 } CPU;
 
-void main()
+void assembler(char program[][])
 {
 
   CPU mycpu;
 
-  char program[256][10];
-
   int i = 0;
-  while (program[i]!=NULL && i<256) {
+  while (program[i][0]!='\0' && i<256) {
     char *p = program[i];
     char ir[10];
     int j = 0;
-    while(*p!=' '){
+    while(*p!=' ' && *p!='\0'){
       ir[j]=*p++;j++;
     }
     ir[j]='\0';
     uint8_t opcode = 0;
-    if(strcmp(ir,"ADD")){
-    } else if(strcmp(ir,"SUB")){
+    if(!strcmp(ir,"ADD")){ //strcmp returns 0 for true
+    } else if(!strcmp(ir,"SUB")){
       opcode = opcode | 0x1;
-    } else if(strcmp(ir,"NAND")){
+    } else if(!strcmp(ir,"NAND")){
       opcode = opcode | 0x2;
-    } else if(strcmp(ir,"LD")){
+    } else if(!strcmp(ir,"LD")){
       opcode = opcode | 0x3;
-    } else if(strcmp(ir,"ST")){
+    } else if(!strcmp(ir,"ST")){
       opcode = opcode | 0x4;
-    } else if(strcmp(ir,"PUSH")){
+    } else if(!strcmp(ir,"PUSH")){
       opcode = opcode | 0x5;
-    } else if(strcmp(ir,"POP")){
+    } else if(!strcmp(ir,"POP")){
       opcode = opcode | 0x6;
-    } else if(strcmp(ir, "BRZ")){
+    } else if(!strcmp(ir, "BRZ")){
       opcode = opcode | 0x7;
     } else {
       printf("Bad instruction at %d\n",i+1);
       return;
     }
     opcode = opcode << 5;
+    while(*p==' '&&*p!='\0') p++;
     char operand[4];
     int k = 0;
-    while(*p!=' '||*p!='\0'){
-      operand[k]=*p+=1;k++;
+    while(*p!=' '&& *p!='\0'){
+      operand[k]=*p++;k++;
     }
     operand[k]='\0';
     long operandVal = strtol(operand, NULL, 16);
@@ -70,3 +69,5 @@ void main()
   }
 
 }
+
+void main(){}
