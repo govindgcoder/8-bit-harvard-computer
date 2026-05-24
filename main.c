@@ -79,19 +79,18 @@ void process(CPU cpu){
   ts.tv_nsec = 750000000;  // 100 million nanoseconds = 0.1 seconds
   while (true) {
     printf("\033[2J\033[H");
-    printf("╔═════════════╦═════════════════╦════════════════╦════════════╗\n");
+    printf("\n\n╔═════════════╦═════════════════╦════════════════╦════════════╗\n");
     printf("|  \033[36m[ACC: %02x]\033[0m  |", cpu.A);
     printf("\033[32m[EXECUTE: %02x %02x]\033[0m |", cpu.execute_opc, cpu.execute_opr);
     printf("  \033[33m[DECODE: %02x]\033[0m  |", cpu.decode_ir);
     printf("\033[31m[FETCH: %02x]\033[0m | \n", cpu.fetch_ir);
-    printf("╚═════════════╩═════════════════╩════════════════╩════════════╝\n");
-    printf("Registers - 12,13,14,15: [%02x][%02x][%02x][%02x]\n",cpu.RAM[11],cpu.RAM[12],cpu.RAM[13],cpu.RAM[14]);
+    printf("╚═════════════╩═════════════════╩════════════════╩════════════╝\n\n");
     printf(" \033[1;37mDisplay Registers (12-15):\033[0m\n");
     printf(" ╔════╦════╦════╦════╗\n");
     printf(" ║ %02x ║ %02x ║ %02x ║ %02x ║\n", cpu.RAM[11], cpu.RAM[12], cpu.RAM[13], cpu.RAM[14]);
     printf(" ╚════╩════╩════╩════╝\n");
     
-    printf("\n Zero Flag: [%c]   Stall: [%c]\n", cpu.zero ? '1' : '0', cpu.stall_pipe ? '1' : '0');
+    printf("\n Zero Flag: [%c]   Stall: [%c]\n\n", cpu.zero ? '1' : '0', cpu.stall_pipe ? '1' : '0');
     
     fflush(stdout);
     nanosleep(&ts, NULL);
