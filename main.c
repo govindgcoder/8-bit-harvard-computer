@@ -76,7 +76,7 @@ void assembler(char program[][32], CPU *cpu)
 void process(CPU cpu){
   struct timespec ts;
   ts.tv_sec = 0;           // 0 seconds
-  ts.tv_nsec = 100000000;  // 100 million nanoseconds = 0.1 seconds
+  ts.tv_nsec = 750000000;  // 100 million nanoseconds = 0.1 seconds
   while (true) {
     printf("\033[2J\033[H");
     printf("╔═════════════╦═════════════════╦════════════════╦════════════╗\n");
@@ -86,6 +86,13 @@ void process(CPU cpu){
     printf("\033[31m[FETCH: %02x]\033[0m | \n", cpu.fetch_ir);
     printf("╚═════════════╩═════════════════╩════════════════╩════════════╝\n");
     printf("Registers - 12,13,14,15: [%02x][%02x][%02x][%02x]\n",cpu.RAM[11],cpu.RAM[12],cpu.RAM[13],cpu.RAM[14]);
+    printf(" \033[1;37mDisplay Registers (12-15):\033[0m\n");
+    printf(" ╔════╦════╦════╦════╗\n");
+    printf(" ║ %02x ║ %02x ║ %02x ║ %02x ║\n", cpu.RAM[11], cpu.RAM[12], cpu.RAM[13], cpu.RAM[14]);
+    printf(" ╚════╩════╩════╩════╝\n");
+    
+    printf("\n Zero Flag: [%c]   Stall: [%c]\n", cpu.zero ? '1' : '0', cpu.stall_pipe ? '1' : '0');
+    
     fflush(stdout);
     nanosleep(&ts, NULL);
     // execute
