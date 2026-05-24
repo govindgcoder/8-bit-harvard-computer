@@ -3,6 +3,7 @@
 #include<stdint.h>
 #include<string.h>
 #include<stdlib.h>
+#include <time.h>
 
 typedef struct CPU {
   uint8_t PC; // program counter
@@ -11,8 +12,7 @@ typedef struct CPU {
   uint8_t RAM[32]; // random access
   bool zero; // zero flag for branching
   bool stall_pipe; // to stall pipeline
-  uint8_t fetch_instruc; // for pipeline fetch
-  uint8_t decode_instruc; // for pipeline decode
+  uint8_t fetch_ir; // for pipeline fetch
   uint8_t execute_opc; // for pipeline execute before calling alu
   uint8_t execute_opr;
   uint8_t stk; // stack pointer
@@ -66,6 +66,91 @@ void assembler(char program[][10], CPU *cpu)
     i++;
   }
 
+}
+
+// only 15 general registers - i will set 0000 for use in operands
+// 000 -> 111: ADD, SUB, NAND, LD, ST, PUSH, POP, BRZ 
+// stack can be from 15 to 31
+// registers will be from 0 to 14
+void process(*CPU cpu){
+  struct timespec ts;
+  ts.tv_sec = 0;           // 0 seconds
+  ts.tv_nsec = 100000000;  // 100 million nanoseconds = 0.1 seconds
+  while (true) {
+    printf("[[ACC: %02x]][EXECUTE: %02x %02x][DECODE: %02x][FETCH: %02x]\n",cpu.A,cpu.execute_opc,cpu.execute_opr,cpu.decode_ir,cpu.fetch_ir);
+    printf("Registers - 12,13,14,15: [%02x][%02x][%02x][%02x]\n",cpu.RAM[11],cpu.RAM[12],cpu.RAM[13],cpu.RAM[14]);
+    fflush(stdout);
+    nanosleep(&ts, NULL);
+    // execute
+    if(execute_opr>15) goto end_exec;
+    switch (cpu.execute_opc){
+      case 0:
+        // add
+        if(cpu.execute_opr!=0){
+          cpu.A+=cpu.RAM[cpu.execute_opr-1];
+        }
+        break;
+      case 1:
+        // sub
+        if(cpu.execute_opr!=0){
+          cpu.A+=cpu.RAM[cpu.execute_opr-1];
+        }
+        cpu.zero = (cpu.A == 0);
+        break;
+      case 2:
+        // nand
+        if(cpu.execute_opr==0){
+          cpu.A=~cpu.A;
+        } else {
+          cpu.A=~(cpu.A & cpu.RAM[cpu.execute_opr-1]);
+        }
+        cpu.zero = (cpu.A == 0);
+        break;
+      case 3:
+        // load
+        if(cpu.execute_opr==0) cpu.A = 0;
+        else {
+          cpu.A = cpu.RAM[cpu.execute_opr-1];
+        }
+        break;
+      case 4:
+        // store and stop
+        if(cpu.execute_opr==0) goto end_process;
+        else {
+          cpu.RAM[cpu.execute_opr-1]=cpu.A;
+        }
+        break;
+      case 5:
+        // push
+        if(cpu.execute_opr!=0&&cpu.stk<17){
+          cpu.RAM[++cpu.stk]=cpu.A;
+        }
+        break;
+      case 6:
+        // pop
+        if(cpu.execute_opr!=0&&cpu.stk>-1){
+          cpu.A=cpu.RAM[--cpu.stk];
+        }
+        break;
+      default:
+        break;
+    }
+    end_exec : ;
+    if (cpu.PC = 255) goto end_process;
+    // decode
+    cpu.execute_opr = cpu.fetch_ir & 0x1F;
+    cpu.execute_opc = cpu.fetch_ir >> 5;
+    if(execute_opc==7){
+      cpu.PC -= cpu.execute_opr;
+      cpu.stall_pipe=true;
+    }
+    // fetch
+    if(!cpu.stall_pipe){
+      cpu.fetch_ir = cpu.ROM[cpu.PC++];
+    } else {cpu.stall_pipe=false;}
+  }
+  end_process : ;
+  printf("Program ended.\n");
 }
 
 int main() {
