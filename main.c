@@ -13,12 +13,13 @@ typedef struct CPU {
   bool zero; // zero flag for branching
   bool stall_pipe; // to stall pipeline
   uint8_t fetch_ir; // for pipeline fetch
+  uint8_t decode_ir; // for pipeline decode
   uint8_t execute_opc; // for pipeline execute before calling alu
   uint8_t execute_opr;
   uint8_t stk; // stack pointer
 } CPU;
 
-void assembler(char program[][10], CPU *cpu)
+void assembler(char program[][32], CPU *cpu)
 {
 
   int i = 0;
@@ -52,7 +53,7 @@ void assembler(char program[][10], CPU *cpu)
     }
     opcode = opcode << 5;
     while(*p==' '&&*p!='\0') p++;
-    char operand[4];
+    char operand[10];
     int k = 0;
     while(*p!=' '&& *p!='\0'){
       operand[k]=*p++;k++;
@@ -72,7 +73,7 @@ void assembler(char program[][10], CPU *cpu)
 // 000 -> 111: ADD, SUB, NAND, LD, ST, PUSH, POP, BRZ 
 // stack can be from 15 to 31
 // registers will be from 0 to 14
-void process(*CPU cpu){
+void process(CPU cpu){
   struct timespec ts;
   ts.tv_sec = 0;           // 0 seconds
   ts.tv_nsec = 100000000;  // 100 million nanoseconds = 0.1 seconds
@@ -82,7 +83,7 @@ void process(*CPU cpu){
     fflush(stdout);
     nanosleep(&ts, NULL);
     // execute
-    if(execute_opr>15) goto end_exec;
+    if(cpu.execute_opr>15) goto end_exec;
     switch (cpu.execute_opc){
       case 0:
         // add
@@ -93,7 +94,7 @@ void process(*CPU cpu){
       case 1:
         // sub
         if(cpu.execute_opr!=0){
-          cpu.A+=cpu.RAM[cpu.execute_opr-1];
+          cpu.A-=cpu.RAM[cpu.execute_opr-1];
         }
         cpu.zero = (cpu.A == 0);
         break;
@@ -122,13 +123,13 @@ void process(*CPU cpu){
         break;
       case 5:
         // push
-        if(cpu.execute_opr!=0&&cpu.stk<17){
-          cpu.RAM[++cpu.stk]=cpu.A;
+        if(cpu.execute_opr!=0&&cpu.stk<32){
+          cpu.RAM[cpu.stk++]=cpu.A;
         }
         break;
       case 6:
         // pop
-        if(cpu.execute_opr!=0&&cpu.stk>-1){
+        if(cpu.execute_opr!=0&&cpu.stk>15){
           cpu.A=cpu.RAM[--cpu.stk];
         }
         break;
@@ -136,40 +137,42 @@ void process(*CPU cpu){
         break;
     }
     end_exec : ;
-    if (cpu.PC = 255) goto end_process;
+    if (cpu.PC == 255) goto end_process;
     // decode
+    cpu.decode_ir = cpu.fetch_ir;
     cpu.execute_opr = cpu.fetch_ir & 0x1F;
     cpu.execute_opc = cpu.fetch_ir >> 5;
-    if(execute_opc==7){
+    if(cpu.execute_opc==7 && cpu.zero){
       cpu.PC -= cpu.execute_opr;
       cpu.stall_pipe=true;
     }
     // fetch
     if(!cpu.stall_pipe){
       cpu.fetch_ir = cpu.ROM[cpu.PC++];
-    } else {cpu.stall_pipe=false;}
+    } else {cpu.stall_pipe=false; cpu.fetch_ir=0;}
   }
   end_process : ;
   printf("Program ended.\n");
 }
 
 int main() {
-  CPU cpu = {0};
+  CPU cpu = {.stk=15};
   printf("8 bit Virtual PC\n");
   printf("format: INSTRUCTION OPERAND eg: ADD 0x01\n");
   printf("Enter instructions (one per line, empty line to finish):\n");
-  char program[256][10] = {0};
+  char program[256][32] = {0};
   int line = 0;
-  while (line < 256 && fgets(program[line], 10, stdin)) {
-    size_t len = strlen(program[line]);
-    if (len > 0 && program[line][len-1] == '\n')
-      program[line][len-1] = '\0';
+  while (line < 256 && fgets(program[line], 32, stdin)) {
+    program[line][strcspn(program[line], "\r\n")] = '\0';
+    
     if (program[line][0] == '\0')
       break;
     line++;
   }
 
   assembler(program, &cpu);
+
+  process(cpu);
 
   printf("\nROM dump (hex):\n");
   for (int i = 0; i < 256; i++) {
