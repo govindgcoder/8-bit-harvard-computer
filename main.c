@@ -78,7 +78,13 @@ void process(CPU cpu){
   ts.tv_sec = 0;           // 0 seconds
   ts.tv_nsec = 100000000;  // 100 million nanoseconds = 0.1 seconds
   while (true) {
-    printf("[[ACC: %02x]][EXECUTE: %02x %02x][DECODE: %02x][FETCH: %02x]\n",cpu.A,cpu.execute_opc,cpu.execute_opr,cpu.decode_ir,cpu.fetch_ir);
+    printf("\033[2J\033[H");
+    printf("╔═════════════╦═════════════════╦════════════════╦════════════╗\n");
+    printf("|  \033[36m[ACC: %02x]\033[0m  |", cpu.A);
+    printf("\033[32m[EXECUTE: %02x %02x]\033[0m |", cpu.execute_opc, cpu.execute_opr);
+    printf("  \033[33m[DECODE: %02x]\033[0m  |", cpu.decode_ir);
+    printf("\033[31m[FETCH: %02x]\033[0m | \n", cpu.fetch_ir);
+    printf("╚═════════════╩═════════════════╩════════════════╩════════════╝\n");
     printf("Registers - 12,13,14,15: [%02x][%02x][%02x][%02x]\n",cpu.RAM[11],cpu.RAM[12],cpu.RAM[13],cpu.RAM[14]);
     fflush(stdout);
     nanosleep(&ts, NULL);
@@ -157,6 +163,7 @@ void process(CPU cpu){
 
 int main() {
   CPU cpu = {.stk=15};
+
   printf("8 bit Virtual PC\n");
   printf("format: INSTRUCTION OPERAND eg: ADD 0x01\n");
   printf("Enter instructions (one per line, empty line to finish):\n");
